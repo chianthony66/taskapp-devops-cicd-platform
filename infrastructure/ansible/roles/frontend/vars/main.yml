@@ -1,0 +1,5 @@
+---
+# vars file for frontend
+
+domain_name: "devops-tsacademy.com"
+admin_email: "admin@devops-tsacademy.com"

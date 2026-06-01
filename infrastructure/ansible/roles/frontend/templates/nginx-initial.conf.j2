@@ -1,0 +1,28 @@
+# Initial Nginx configuration - will be updated by GitHub Actions
+# This is enough to get SSL certificate, then GA deploys the real app
+
+server {
+    listen 80;
+    server_name {{ domain_name }} www.{{ domain_name }};
+    
+    # Temporary root for Certbot challenge
+    root /var/www/html;
+    
+    location / {
+        # Return maintenance page until GitHub Actions deploys
+        return 503;
+    }
+    
+    location /.well-known/acme-challenge/ {
+        # Allow Certbot to verify domain
+        root /var/www/certbot;
+    }
+    
+    error_page 503 @maintenance;
+    location @maintenance {
+        return 200 "Server ready for deployment. Run GitHub Actions workflow.";
+        add_header Content-Type text/plain;
+    }
+}
+
+# Placeholder for SSL server block (Certbot will create this)

@@ -1,0 +1,66 @@
+---
+# tasks file for frontend
+# This role PREPARES the server for GitHub Actions deployment
+# It does NOT deploy the application code
+
+- name: Install frontend packages
+  apt:
+    name: "{{ frontend_packages }}"
+    state: present
+    update_cache: yes
+
+- name: Create frontend application directory (for GitHub Actions to use)
+  file:
+    path: "{{ frontend_nginx_root }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Create directory for GitHub Actions deployments
+  file:
+    path: "{{ app_base_dir }}/frontend-deploy"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+
+- name: Ensure web server is running
+  service:
+    name: "{{ web_server_package }}"
+    state: started
+    enabled: true
+
+- name: Install Certbot for SSL
+  apt:
+    name:
+      - certbot
+      - python3-certbot-nginx
+    state: present
+
+# Note: We create a temporary Nginx config for Certbot initial setup
+# GitHub Actions will update this with the real config after first deploy
+- name: Create initial Nginx config placeholder
+  template:
+    src: nginx-initial.conf.j2
+    dest: /etc/nginx/sites-available/taskapp
+    mode: '0644'
+  notify: Restart nginx
+
+- name: Remove default nginx site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Restart nginx
+
+- name: Enable taskapp site
+  file:
+    src: /etc/nginx/sites-available/taskapp
+    dest: /etc/nginx/sites-enabled/taskapp
+    state: link
+    force: yes
+  notify: Restart nginx
+
+- name: Validate nginx configuration
+  command: nginx -t
+  changed_when: false

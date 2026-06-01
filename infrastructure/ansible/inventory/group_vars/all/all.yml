@@ -1,0 +1,14 @@
+common_packages:
+  - curl
+  - git
+  - unzip
+  - ca-certificates
+  - curl
+  - gnupg
+  - acl
+  - python3-venv
+
+app_user: taskapp
+app_group: taskapp
+app_base_dir: /opt/taskapp
+

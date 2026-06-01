@@ -1,0 +1,97 @@
+---
+# tasks file for backend
+# This configures the server AND deploys initial code
+# GitHub Actions will handle subsequent deployments
+
+- name: Install backend runtime
+  apt:
+    name: "{{ backend_runtime_packages }}"
+    state: present
+    update_cache: yes
+
+- name: Create backend application directory
+  file:
+    path: "{{ backend_app_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0755"
+
+- name: Check if backend repo already cloned
+  stat:
+    path: "{{ backend_app_dir }}/.git"
+  register: repo_git_dir
+  become_user: "{{ app_user }}"
+
+- name: Clone backend repository (only if not present)
+  git:
+    repo: "{{ backend_repo_url }}"
+    dest: "{{ backend_app_dir }}"
+    version: "{{ backend_branch }}"
+    clone: yes
+    update: no
+  become_user: "{{ app_user }}"
+  when: not repo_git_dir.stat.exists
+
+- name: Create Python virtual environment
+  command: python3 -m venv {{ backend_venv_dir }}
+  args:
+    creates: "{{ backend_venv_dir }}/bin/activate"
+  become_user: "{{ app_user }}"
+
+- name: Create backend environment file
+  template:
+    src: env.j2
+    dest: "{{ backend_app_dir }}/.env"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0600"
+
+- name: Install backend Python requirements
+  pip:
+    requirements: "{{ backend_app_dir }}/requirements.txt"
+    virtualenv: "{{ backend_venv_dir }}"
+    virtualenv_python: python3
+  become_user: "{{ app_user }}"
+
+- name: Install backend systemd unit
+  template:
+    src: taskapp-backend.service.j2
+    dest: /etc/systemd/system/taskapp-backend.service
+    mode: "0644"
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: true
+
+- name: Enable and start backend service
+  systemd:
+    name: taskapp-backend
+    enabled: true
+    state: started
+
+- name: Create nginx config for backend
+  template:
+    src: nginx-backend.conf.j2
+    dest: /etc/nginx/sites-available/taskapp-backend
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Enable backend nginx site
+  file:
+    src: /etc/nginx/sites-available/taskapp-backend
+    dest: /etc/nginx/sites-enabled/taskapp-backend
+    state: link
+  notify: Reload nginx
+
+- name: Remove default nginx site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload nginx
+
+- name: Ensure nginx is running
+  service:
+    name: nginx
+    state: started
+    enabled: true

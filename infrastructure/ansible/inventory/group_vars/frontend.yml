@@ -1,0 +1,18 @@
+web_server_package: nginx
+frontend_listen_port: 80
+frontend_app_dir: "{{ app_base_dir }}/frontend"
+frontend_packages:
+  - nginx
+frontend_repo_url: https://github.com/onlydurodola/taskapp_frontend.git
+frontend_branch: main
+
+frontend_src_dir: "{{ app_base_dir }}/frontend"
+frontend_build_dir: "{{ frontend_src_dir }}/dist"
+frontend_nginx_root: /var/www/taskapp
+
+# Domain configuration
+domain_name: "devops-tsacademy.com"
+admin_email: "admin@devops-tsacademy.com"
+
+# Backend location for Nginx proxy (will be updated by Terraform output)
+backend_private_ip: "10.0.1.246"  # Students update this after Terraform apply
