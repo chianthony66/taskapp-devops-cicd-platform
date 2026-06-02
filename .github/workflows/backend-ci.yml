@@ -32,7 +32,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-          cache-dependency-path: 'requirements.txt'
+          cache-dependency-path: 'taskapp_backend_cicd/requirements.txt'
 
       - name: Install Linting Tool
         run: |
