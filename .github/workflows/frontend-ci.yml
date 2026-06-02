@@ -82,7 +82,7 @@ jobs:
 
       - name: Build application
         env:
-          VITE_API_URL: https://api.devops-tsacademy.com/api   # Set your backend API URL
+          VITE_API_URL: /api   # Set your backend API URL
           NODE_ENV: production
         run: npm run build
 
