@@ -155,5 +155,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-artifact
-          path: backend.tar.gz
+          path: taskapp_backend_cicd/backend.tar.gz
           retention-days: 7
