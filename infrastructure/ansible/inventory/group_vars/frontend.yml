@@ -15,4 +15,4 @@ domain_name: "devops-tsacademy.com"
 admin_email: "admin@devops-tsacademy.com"
 
 # Backend location for Nginx proxy (will be updated by Terraform output)
-backend_private_ip: "10.0.1.246"  # Students update this after Terraform apply
+backend_private_ip: "10.0.1.200"  # Students update this after Terraform apply
