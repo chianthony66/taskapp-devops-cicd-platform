@@ -1,266 +1,302 @@
-# Team Task Manager (TeamFlow)
+# TaskApp Frontend
 
-A modern Kanban-style task management frontend built with React, TypeScript, Vite, and Tailwind CSS.
+This directory contains the frontend application for the TaskApp DevOps CI/CD Platform.
 
-This application is designed to work with a JWT-secured backend API and demonstrates real-world frontend patterns used in production DevOps-enabled systems, including authentication, protected routing, API abstraction, and environment-based configuration.
+The application is built using React, TypeScript, Vite, and Tailwind CSS and provides a modern task management interface that integrates with the TaskApp Backend API.
 
-## Table of Contents
+The frontend is designed to run within a production-ready DevOps environment and is deployed using infrastructure provisioned with Terraform and configured using Ansible.
 
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [High-Level Architecture](#high-level-architecture)
-- [Authentication Flow](#authentication-flow)
-- [Task Management Flow](#task-management-flow)
-- [Project Structure](#project-structure)
-- [Environment Variables](#environment-variables)
-- [Local Development Setup](#local-development-setup)
-- [API Communication](#api-communication)
-- [Security Considerations](#security-considerations)
-- [Build & Production](#build--production)
-- [Linting & Type Safety](#linting--type-safety)
-- [Assumptions](#assumptions)
-- [Future Improvements](#future-improvements)
+---
 
 ## Overview
 
-Team Task Manager (TeamFlow) is a single-page application (SPA) that allows authenticated users to:
+The frontend application allows authenticated users to:
 
 - Register and log in securely
-- View tasks in a Kanban board
-- Create, update, delete, and move tasks across statuses
-- Persist login sessions across page reloads
-- Interact with a backend REST API using JWT authentication
+- Manage tasks using a Kanban board
+- Create, update, and delete tasks
+- Persist authentication sessions
+- Communicate securely with the backend API
 
-The project is intentionally structured to resemble real production applications, not demos or tutorials.
+The application follows modern frontend architecture patterns including reusable components, centralized API services, route protection, and global authentication state management.
+
+---
 
 ## Features
 
-### Authentication & Authorization
-- User signup and login
+### Authentication
+
+- User registration
+- User login
 - JWT-based authentication
-- Token persistence using localStorage
-- Protected routes using a route guard
-- Automatic session restoration on reload
+- Protected routes
+- Session persistence
 
 ### Task Management
-- Kanban board with three statuses:
-  - To Do
-  - In Progress
-  - Done
-- Drag-and-drop task movement
-- Task priorities:
-  - Low
-  - Medium
-  - High
-- Task creation modal with validation
-- Immediate UI updates after API responses
 
-### UI & UX
-- Responsive layout
-- Clean, modern design using Tailwind CSS
-- Loading and error states
-- Accessible and reusable components
+- Kanban Board Interface
+- Task Creation
+- Task Editing
+- Task Deletion
+- Task Status Management
 
-## Tech Stack
+Supported task states:
+
+- To Do
+- In Progress
+- Done
+
+Task priorities:
+
+- Low
+- Medium
+- High
+
+### User Experience
+
+- Responsive Design
+- Modern UI Components
+- Error Handling
+- Loading States
+- Reusable Component Architecture
+
+---
+
+## Technology Stack
 
 ### Frontend
-- React 18
+
+- React
 - TypeScript
 - Vite
-- React Router v6
+- React Router
 - Tailwind CSS
-- Lucide React (icons)
 
-### Tooling & Quality
-- ESLint (TypeScript + React rules)
-- Strict TypeScript configuration
-- Environment-based configuration via `import.meta.env`
+### Development Tools
 
-## High-Level Architecture
+- ESLint
+- TypeScript
+- npm
 
-The application follows a layered frontend architecture:
+### Deployment
 
-```
-UI Components
-   ↓
-Pages (Routes)
-   ↓
-Context (Authentication State)
-   ↓
+- Nginx
+- AWS EC2
+- GitHub Actions
+- Ansible
+
+---
+
+## Architecture Overview
+
+```text
+User Interface
+      │
+      ▼
+Pages & Routes
+      │
+      ▼
+Authentication Context
+      │
+      ▼
 API Service Layer
-   ↓
-Backend REST API
+      │
+      ▼
+Backend API
 ```
 
-**Why this matters**
-- UI is decoupled from business logic
-- API calls are centralized
-- Authentication state is globally accessible
-- Easier testing, debugging, and scaling
+### Design Principles
 
-## Authentication Flow
+- Component Reusability
+- Separation of Concerns
+- Centralized API Communication
+- Route Protection
+- Environment-Based Configuration
 
-1. User submits login or signup form
-2. Frontend sends credentials to the backend:
-   - `POST /api/auth/login`
-   - `POST /api/auth/signup`
-3. Backend returns:
-   - JWT token
-   - User object
-4. Frontend:
-   - Stores the token in localStorage
-   - Stores user metadata
-   - Updates global authentication context
-5. Protected routes check authentication state before rendering
-
-## Task Management Flow
-
-1. User accesses the dashboard
-2. Frontend fetches tasks: `GET /api/tasks`
-3Tommy. Tasks are grouped by status:
-   - todo
-   - in_progress
-   - done
-4. User actions trigger:
-   - `POST /api/tasks`
-   - `PUT /api/tasks/:id`
-   - `DELETE /api/tasks/:id`
-5. UI updates immediately after successful API responses
-
-All task-related API calls go through a single abstraction layer.
+---
 
 ## Project Structure
 
-```
-.
+```text
+taskapp_frontend_cicd/
 ├── src
-│   ├── components     # Reusable UI components
-│   ├── contexts       # Global state (authentication)
-│   ├── pages          # Route-based pages
-│   ├── services       # API abstraction layer
-│   ├── types          # TypeScript interfaces
-│   ├── App.tsx        # Route definitions
-│   ├── main.tsx       # Application entry point
-│   └── index.css      # Tailwind base styles
-│
-├── index.html         # Root HTML file (Vite entry)
-├── .env.example       # Environment variable template
+│   ├── components/
+│   ├── contexts/
+│   ├── pages/
+│   ├── services/
+│   ├── types/
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── index.css
+├── index.html
+├── package.json
 ├── vite.config.ts
 ├── tailwind.config.js
-├── eslint.config.js
-└── package.json
+└── eslint.config.js
 ```
 
-**Note:** This project does not use a `public/` folder. Vite serves assets directly from `index.html` and the build output.
+---
+
+## Authentication Flow
+
+1. User submits credentials
+2. Frontend sends request to backend API
+3. Backend validates credentials
+4. JWT token is returned
+5. Token is stored locally
+6. Protected routes become accessible
+
+Example:
+
+```http
+Authorization: Bearer <JWT_TOKEN>
+```
+
+---
+
+## API Integration
+
+All API communication is centralized in:
+
+```text
+src/services/api.ts
+```
+
+Responsibilities include:
+
+- Authentication requests
+- Task management requests
+- JWT token handling
+- Error handling
+- API configuration
+
+---
 
 ## Environment Variables
 
-Environment variables are managed using Vite’s `import.meta.env` system.
+Example:
 
-**.env.example**
-```
+```env
 VITE_API_URL=http://localhost:5000/api
 ```
 
-**Important Notes**
-- Variables must start with `VITE_`
-- `.env` files should never be committed
-- Different environments (dev, staging, prod) should use different values
+### Required Variables
 
-## Local Development Setup
+| Variable | Purpose |
+|-----------|----------|
+| VITE_API_URL | Backend API URL |
 
-### Prerequisites
-- Node.js 18+
-- npm (or yarn / pnpm)
-- Backend API running locally or remotely
+---
+
+## Local Development
 
 ### Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### Start Development Server
+
 ```bash
 npm run dev
 ```
 
-The application will be available at: http://localhost:5173
+Application URL:
 
-## API Communication
+```text
+http://localhost:5173
+```
 
-All backend communication is handled in:  
-`src/services/api.ts`
+---
 
-**Why this approach?**
-- Centralized API logic
-- Automatic JWT header injection
-- Consistent error handling
-- Easier refactoring or mocking
-
-Each request automatically includes:  
-`Authorization: Bearer <JWT_TOKEN>`
-
-## Security Considerations
-
-- JWT stored in localStorage
-- Authorization headers added automatically
-- Protected routes prevent unauthorized access
-- Sensitive operations are handled server-side
-
-For higher-security environments, HttpOnly cookies and refresh-token rotation are recommended.
-
-## Build & Production
+## Build Application
 
 ### Create Production Build
+
 ```bash
 npm run build
 ```
 
-This outputs static assets to: `dist/`
+### Preview Production Build
 
-### Preview Production Build Locally
 ```bash
 npm run preview
 ```
 
-The build output is compatible with:
-- CapRover
-- Nginx
-- Cloudflare Pages
-- Netlify
-- Vercel (static mode)
+Build artifacts are generated in:
 
-## Linting & Type Safety
+```text
+dist/
+```
 
-### Run ESLint
+---
+
+## Code Quality
+
+### Run Linting
+
 ```bash
 npm run lint
 ```
 
 ### Run Type Checking
+
 ```bash
 npm run typecheck
 ```
 
-TypeScript is configured in strict mode to catch issues early.
+---
 
-## Assumptions
+## CI/CD Integration
 
-- Backend implements JWT authentication correctly
-- Backend supports CORS
-- API follows REST conventions
-- Users must be authenticated before accessing `/dashboard`
+The frontend application is designed to be integrated into automated deployment workflows.
+
+Deployment infrastructure includes:
+
+- AWS EC2
+- Nginx
+- GitHub Actions
+- Terraform
+- Ansible
+
+The application can be built automatically and deployed as part of a complete DevOps pipeline.
+
+---
+
+## Security Considerations
+
+The application implements:
+
+- JWT Authentication
+- Protected Routes
+- Centralized API Access
+- Environment-Based Configuration
+
+Additional production enhancements may include:
+
+- Refresh Tokens
+- HttpOnly Cookies
+- CSP Headers
+- Advanced Session Management
+
+---
 
 ## Future Improvements
 
+- Real-time task updates
 - Role-Based Access Control (RBAC)
-- Task assignment to users
-- Real-time updates using WebSockets or SSE
-- Pagination and filtering
-- Audit logs
-- Refresh token rotation
-- End-to-end testing (Playwright / Cypress)
-- Dockerized frontend build
-- CI/CD pipeline integration
+- Task assignment
+- WebSocket integration
+- Audit logging
+- End-to-end testing
+- Docker containerization
+- Kubernetes deployment
 
+---
+
+## Author
+
+**Anthony Chidi**
+
+*DevOps Engineer | Cloud Engineer | CI/CD & Infrastructure Automation*
