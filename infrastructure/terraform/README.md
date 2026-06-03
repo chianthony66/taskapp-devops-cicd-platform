@@ -1,287 +1,263 @@
-# taskapp-tsa-terra
+# Terraform Infrastructure
 
-Infrastructure as Code (IaC) repository for the **TaskApp** project, built with **Terraform** using a **modules-first architecture**.
+This directory contains the Infrastructure as Code (IaC) implementation for the TaskApp DevOps CI/CD Platform.
 
-This repository is used in **TS Academy** to teach Terraform fundamentals, AWS infrastructure design, and production-ready patterns — **step by step**, without magic or copy-paste learning.
-
----
-
-## 🎯 Purpose of This Repository
-
-This repository exists to:
-
-- Teach **Terraform fundamentals** clearly
-- Demonstrate **real AWS infrastructure** (VPC, EC2, RDS)
-- Enforce **clean architecture and separation of concerns**
-- Introduce **modules early**, the way real teams work
-- Prepare students for configuration management (Ansible) and CI/CD later
-
-This is **not** a toy example.  
-It mirrors how professional DevOps teams structure Terraform projects.
+The infrastructure is provisioned on AWS using Terraform and follows a modular architecture designed for scalability, maintainability, and reusability. The project demonstrates industry-standard Terraform practices including remote state management, state locking, network segmentation, and reusable modules.
 
 ---
 
-## 🧠 Key Design Principles
+## Overview
 
-This repo is intentionally designed around the following ideas:
+The Terraform configuration provisions the AWS infrastructure required to host the TaskApp platform.
 
-- **Root modules orchestrate**
-- **Child modules implement**
-- **Infrastructure is built in layers**
-- **Security is enforced by design**
-- **State is shared and locked for team safety**
+Provisioned resources include:
 
-We do **not**:
-- hardcode credentials
-- hardcode AMI IDs
-- expose databases publicly
-- mix unrelated concerns in one module
-- rely on local Terraform state for teamwork
+- Virtual Private Cloud (VPC)
+- Public and Private Subnets
+- Internet Gateway
+- Route Tables
+- Security Groups
+- Frontend EC2 Instance
+- Backend EC2 Instance
+- PostgreSQL Database (RDS)
+- Remote Terraform State Backend
+
+The infrastructure is designed to separate networking, compute, and database concerns using reusable Terraform modules.
 
 ---
 
-## 🗂️ Repository Structure
+## Infrastructure Architecture
 
+The infrastructure follows a layered architecture:
+
+```text
+AWS
+│
+├── VPC
+│   ├── Public Subnets
+│   │   └── Frontend EC2
+│   │
+│   └── Private Subnets
+│       ├── Backend EC2
+│       └── PostgreSQL RDS
+│
+└── Security Groups
+    ├── Frontend Access
+    ├── Backend Access
+    └── Database Access
 ```
-taskapp-tsa-terra/
+
+### Key Design Considerations
+
+- Frontend server accessible from the internet
+- Backend server isolated from direct public access
+- Database deployed in private subnets
+- Security Group-based communication between application layers
+
+---
+
+## Repository Structure
+
+```text
+terraform/
 ├── terraform-backend/
-│   ├── main.tf
-│   ├── variables.tf
-│   └── outputs.tf
-│
 ├── root/
-│   ├── versions.tf
-│   ├── providers.tf
-│   ├── backend.tf
-│   ├── variables.tf
-│   ├── main.tf
-│   └── outputs.tf
-│
 └── modules/
     ├── core/
-    │   ├── variables.tf
-    │   ├── main.tf
-    │   └── outputs.tf
     ├── vpc/
-    │   ├── variables.tf
-    │   ├── main.tf
-    │   └── outputs.tf
     ├── ec2/
-    │   ├── variables.tf
-    │   ├── main.tf
-    │   └── outputs.tf
     └── rds/
-        ├── variables.tf
-        ├── main.tf
-        └── outputs.tf
 ```
 
 ---
 
-## 📦 Folder-by-Folder Explanation
+## Module Structure
 
-### `terraform-backend/` — **State Backend Bootstrap**
+### Core Module
 
-This folder creates **infrastructure required by Terraform itself**:
+**Purpose**
 
-- S3 bucket for remote state storage
-- DynamoDB table for state locking
+- Shared project configuration
+- Common variables and outputs
+- Centralized project context
 
-Why this exists:
-- Terraform **cannot safely manage its own backend**
-- Backend resources must be created **once**, separately
-- This folder is applied **before** anything else
+**Location**
 
-This folder is run **only once** per project.
+```text
+modules/core/
+```
 
 ---
 
-### `root/` — **Terraform Entrypoint (Orchestrator)**
+### VPC Module
 
-This is where Terraform commands are executed:
+**Responsible for**
 
-```bash
-terraform init
-terraform plan
-terraform apply
-```
-
-Responsibilities of `root/`:
-
-- Define Terraform and provider versions
-- Configure AWS provider
-- Configure remote state backend
-- Define input variables
-- Call modules
-- Expose final outputs
-
-**Important rule**: Root should be thin.  
-It orchestrates modules — it does not build infrastructure directly.
-
-### `modules/` — Reusable Infrastructure Library
-
-Each folder inside `modules/` represents one infrastructure concern.
-
-Modules:
-
-- Accept inputs (`variables.tf`)
-- Implement logic/resources (`main.tf`)
-- Return outputs (`outputs.tf`)
-
-Modules are isolated:
-
-- They do not see root variables unless passed explicitly
-- They do not configure providers
-- They do not manage state
-
-#### 🔧 Module Breakdown
-
-**`modules/core/`** — Project Context Module  
-Purpose:
-
-- Establish shared project context
-- Teach module wiring (inputs → locals → outputs)
-- Act as a foundation for later refactors
-
-This module intentionally creates **no AWS resources**.  
-It exists to teach:
-
-- Module isolation
-- Locals
-- Clean interfaces
-
-**`modules/vpc/`** — Networking Layer  
-Creates:
-
-- VPC
+- VPC creation
+- Public subnets
+- Private subnets
 - Internet Gateway
-- Public subnets (multi-AZ)
-- Private subnets (multi-AZ)
 - Route tables
-- Security groups (frontend, backend, database)
+- Security groups
 
-This module represents the entire networking boundary.  
-Security is enforced here:
+**Location**
 
-- Public access only where required
-- Private subnets isolated
-- SG-to-SG rules (zero trust)
-
-**`modules/ec2/`** — Compute Layer  
-Creates:
-
-- Frontend EC2 instance (public subnet)
-- Backend EC2 instance (private subnet)
-
-Design principles:
-
-- Roles are explicit (frontend vs backend)
-- AMIs are looked up dynamically
-- Networking is injected, not created here
-
-This module consumes outputs from `vpc`.
-
-**`modules/rds/`** — Database Layer  
-Creates:
-
-- RDS PostgreSQL instance
-- DB Subnet Group spanning private subnets
-- Enforces backend-only access via security groups
-
-Key properties:
-
-- Never publicly accessible
-- Multi-AZ ready
-- Password treated as sensitive input
-- Free-tier–safe configuration for teaching
+```text
+modules/vpc/
+```
 
 ---
 
-## 🔐 Terraform State Management
+### EC2 Module
 
-This project uses **remote Terraform state**:
+**Responsible for**
 
-- State stored in S3
-- State locking via DynamoDB
-- Encryption enabled
-- Prevents concurrent modification
+- Frontend EC2 instance
+- Backend EC2 instance
+- Instance networking configuration
+- Security group attachment
 
-Why this matters:
+**Location**
 
-- Supports teamwork
-- Prevents race conditions
-- Protects critical resources (EC2, RDS)
-
-Local state is not used after backend migration.
+```text
+modules/ec2/
+```
 
 ---
 
-## 🚀 How to Use This Repository
+### RDS Module
 
-1️⃣ **Bootstrap the Terraform backend**
+**Responsible for**
+
+- PostgreSQL database
+- Database subnet groups
+- Database security controls
+
+**Location**
+
+```text
+modules/rds/
+```
+
+---
+
+## Remote State Management
+
+Terraform state is stored remotely to support collaboration and improve reliability.
+
+### Features
+
+- S3 Backend Storage
+- DynamoDB State Locking
+- State Consistency Protection
+- Team Collaboration Support
+
+Backend resources are provisioned separately from the main infrastructure.
+
+**Location**
+
+```text
+terraform-backend/
+```
+
+---
+
+## Deployment Workflow
+
+### 1. Bootstrap Backend Resources
 
 ```bash
 cd terraform-backend
-terraform init
-terraform apply
-```
 
-Do this **once**.
-
-2️⃣ **Deploy infrastructure**
-
-```bash
-cd ../root
 terraform init
 terraform plan
 terraform apply
 ```
 
-You will be prompted for sensitive variables (e.g. DB password, ssh key).
+This creates:
+
+- S3 bucket
+- DynamoDB table
+
+required for remote state management.
 
 ---
 
-## 🧪 What This Repo Does Not Do (Yet)
+### 2. Deploy Infrastructure
 
-This repository intentionally does not cover:
+```bash
+cd ../root
 
-- Environment separation (dev/staging/prod)
-- Ansible configuration
-- Application deployment
-- CI/CD pipelines
-- Auto Scaling or Load Balancers
+terraform init
+terraform plan
+terraform apply
+```
 
-Those come in later phases.
+Terraform provisions:
 
----
-
-## 🎓 Teaching Philosophy
-
-This repository is structured to:
-
-- Remove mystery
-- Enforce correctness
-- Build intuition
-- Prepare students for real production systems
-
-Every design choice is intentional.  
-If something feels “extra” or “verbose” — it’s because **clarity beats cleverness**.
+- Networking
+- Compute resources
+- Database resources
+- Security controls
 
 ---
 
-## ✅ Outcome
+## Security Considerations
 
-By the end of this Terraform phase, students will be able to:
+The infrastructure follows several security best practices:
 
-- Read and understand real Terraform repos
-- Design secure AWS infrastructure
-- Use modules correctly
-- Reason about state and locking
-- Avoid beginner Terraform mistakes
+- Remote state stored outside local machines
+- State locking enabled
+- Database isolated within private subnets
+- Security Group-based access controls
+- Sensitive values managed as variables
+- No hardcoded AWS credentials
 
 ---
 
-## 🏁 Project Name
+## Key Features
 
-**taskapp-tsa-terra**  
-Terraform infrastructure for the TaskApp project at TS Academy.
+- Modular Terraform architecture
+- Reusable infrastructure components
+- Remote state management
+- State locking with DynamoDB
+- AWS networking segmentation
+- Secure database deployment
+- Infrastructure automation
+- Production-oriented design patterns
+
+---
+
+## Common Terraform Commands
+
+### Initialize
+
+```bash
+terraform init
+```
+
+### Preview Changes
+
+```bash
+terraform plan
+```
+
+### Deploy Infrastructure
+
+```bash
+terraform apply
+```
+
+### Destroy Infrastructure
+
+```bash
+terraform destroy
+```
+
+---
+
+## Author
+
+**Anthony Chidi**
+
+*DevOps Engineer | Cloud Engineer | CI/CD & Infrastructure Automation*
