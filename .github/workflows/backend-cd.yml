@@ -35,6 +35,8 @@ jobs:
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
       - name: Deploy to server
         run: |
+          ssh -v -i ~/.ssh/deploy_key ubuntu@${{ secrets.EC2_HOST }} exit
+
           scp -i ~/.ssh/deploy_key backend.tar.gz \
             ubuntu@${{ secrets.EC2_HOST }}:/tmp/
 
