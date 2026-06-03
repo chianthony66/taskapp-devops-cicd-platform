@@ -287,3 +287,4 @@ Production systems should add:
 # trigger
 # ssh debug
 # pubkey debug
+# ssh verbose debug
