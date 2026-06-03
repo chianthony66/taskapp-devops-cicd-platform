@@ -288,3 +288,4 @@ Production systems should add:
 # ssh debug
 # pubkey debug
 # ssh verbose debug
+# cleanup trigger
