@@ -1,291 +1,365 @@
-# Team Task Manager – Backend API
+# TaskApp Backend API
 
-A Flask-based REST API that powers the Team Task Manager (TeamFlow) application.
+This directory contains the backend API for the TaskApp DevOps CI/CD Platform.
 
-This backend provides:
+The application is built with Flask and PostgreSQL and provides secure authentication, task management functionality, and database persistence. It is designed to be deployed through an automated CI/CD pipeline running on AWS infrastructure provisioned with Terraform and configured using Ansible.
 
-- JWT-based authentication
-- Secure task CRUD operations
-- PostgreSQL persistence via SQLAlchemy
-- CORS-enabled API access for frontend clients
-- Production-style application factory pattern
-
-It is designed to be consumed by a modern frontend (React/Vite) and deployed in real-world DevOps environments.
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Architecture Overview](#architecture-overview)
-- [Authentication & Authorization](#authentication--authorization)
-- [API Endpoints](#api-endpoints)
-- [Database Models](#database-models)
-- [Environment Variables](#environment-variables)
-- [Local Development Setup](#local-development-setup)
-- [Database Initialization & Seeding](#database-initialization--seeding)
-- [Running the Application](#running-the-application)
-- [Security Considerations](#security-considerations)
-- [Assumptions](#assumptions)
-- [Future Improvements](#future-improvements)
+---
 
 ## Overview
 
-The Team Task Manager Backend is a RESTful API built with Flask that handles:
+The backend provides:
 
-- User authentication (signup & login)
-- JWT token generation and verification
-- Task creation, retrieval, updating, and deletion
-- Database persistence using PostgreSQL
+- User authentication and authorization
+- JWT-based security
+- Task management API
+- PostgreSQL database integration
+- Database migrations
+- Automated testing
+- CI/CD integration
 
-All task endpoints are protected and require a valid JWT token.
+The API serves as the core business logic layer of the TaskApp platform and is consumed by the React frontend application.
+
+---
 
 ## Features
 
 ### Authentication
-- User signup
+
+- User registration
 - User login
-- JWT token issuance
-- Token validation via request middleware
-- Password hashing with Werkzeug
+- JWT token generation
+- Token validation
+- Password hashing
 
 ### Task Management
+
 - Create tasks
-- Retrieve all tasks
+- Retrieve tasks
 - Update tasks
 - Delete tasks
-- Task attributes:
-  - Title
-  - Description
-  - Priority (low, medium, high)
-  - Status (todo, in_progress, done)
+
+Task attributes include:
+
+- Title
+- Description
+- Priority
+- Status
 
 ### Backend Capabilities
-- Flask application factory pattern
-- SQLAlchemy ORM
-- Automatic database table creation
-- Default user seeding
-- CORS enabled for frontend integration
 
-## Tech Stack
+- Flask Application Factory Pattern
+- SQLAlchemy ORM
+- Alembic Database Migrations
+- Environment-Based Configuration
+- CORS Support
+- Automated Testing
+
+---
+
+## Technology Stack
 
 ### Backend
-- Python 3
+
+- Python
 - Flask
-- Flask-SQLAlchemy
-- Flask-CORS
-- PyJWT
+- SQLAlchemy
+- Alembic
 - PostgreSQL
 
-### Supporting Libraries
-- psycopg2-binary
-- python-dotenv
-- werkzeug.security
+### Security
+
+- JWT Authentication
+- Werkzeug Password Hashing
+
+### Testing
+
+- Pytest
+
+### Deployment
+
+- GitHub Actions
+- AWS EC2
+- Ansible
+- Nginx
+
+---
 
 ## Architecture Overview
 
-The backend follows a clean, modular structure:
-
-```
-Request
-  ↓
-Flask Routes (Blueprint)
-  ↓
-Auth Middleware (JWT validation)
-  ↓
-Service / Model Logic
-  ↓
+```text
+Client Request
+      │
+      ▼
+Flask API
+      │
+      ▼
+Authentication Layer
+      │
+      ▼
+Application Logic
+      │
+      ▼
 SQLAlchemy ORM
-  ↓
+      │
+      ▼
 PostgreSQL Database
 ```
 
-**Key Design Choices**
-- Blueprint-based routing (`/api`)
-- Decorator-based authentication
-- Centralized app creation
+### Design Principles
+
+- Modular application structure
+- Blueprint-based routing
 - Environment-driven configuration
+- Secure authentication
+- Separation of concerns
 
-## Authentication & Authorization
+---
 
-### JWT Authentication
-- Tokens are generated using HS256
-- Tokens contain:
-  - `user_id`
-  - `username`
-- Tokens are passed via the Authorization header
+## Project Structure
 
-**Example:**
+```text
+taskapp_backend_cicd/
+├── app/
+│   ├── auth.py
+│   ├── models.py
+│   ├── routes.py
+│   └── __init__.py
+├── migrations/
+├── tests/
+├── requirements.txt
+├── run.py
+└── alembic.ini
 ```
+
+---
+
+## Authentication
+
+Authentication is implemented using JSON Web Tokens (JWT).
+
+### Login Flow
+
+1. User submits credentials
+2. Credentials are validated
+3. JWT token is generated
+4. Token is returned to the client
+5. Client includes token in future requests
+
+Example:
+
+```http
 Authorization: Bearer <JWT_TOKEN>
 ```
 
-### Token Enforcement
-Protected routes use a decorator: `@token_required`
+Protected routes require a valid token before access is granted.
 
-If the token is:
-- Missing → 401 Unauthorized
-- Invalid → 401 Unauthorized
-- Malformed → 401 Unauthorized
+---
 
 ## API Endpoints
 
 ### Authentication
 
-**POST** `/api/auth/signup`  
-Creates a new user and returns a JWT token.
+#### Register User
 
-**Request Body**
-```json
-{
-  "username": "example",
-  "password": "password123"
-}
+```http
+POST /api/auth/signup
 ```
 
-**POST** `/api/auth/login`  
-Authenticates a user and returns a JWT token.
+#### Login User
 
-### Tasks (Protected)
+```http
+POST /api/auth/login
+```
+
+---
+
+### Tasks
+
+#### Get Tasks
+
+```http
+GET /api/tasks
+```
+
+#### Create Task
+
+```http
+POST /api/tasks
+```
+
+#### Update Task
+
+```http
+PUT /api/tasks/<id>
+```
+
+#### Delete Task
+
+```http
+DELETE /api/tasks/<id>
+```
+
 All task endpoints require authentication.
 
-**GET** `/api/tasks`  
-Returns all tasks (ordered by creation date).
-
-**POST** `/api/tasks`  
-Creates a new task.
-
-**Request Body**
-```json
-{
-  "title": "My Task",
-  "description": "Optional description",
-  "priority": "medium",
-  "status": "todo"
-}
-```
-
-**PUT** `/api/tasks/<id>`  
-Updates an existing task.
-
-**DELETE** `/api/tasks/<id>`  
-Deletes a task.
+---
 
 ## Database Models
 
-### User Model
-- id
-- username (unique)
-- password_hash
-- created_at
+### User
 
-### Task Model
-- id
-- title
-- description
-- priority
-- status
-- created_at
-- updated_at
+| Field | Description |
+|---------|-------------|
+| id | User Identifier |
+| username | Unique Username |
+| password_hash | Encrypted Password |
+| created_at | Creation Timestamp |
 
-SQLAlchemy automatically maps models to PostgreSQL tables.
+### Task
+
+| Field | Description |
+|---------|-------------|
+| id | Task Identifier |
+| title | Task Title |
+| description | Task Description |
+| priority | Task Priority |
+| status | Task Status |
+| created_at | Creation Timestamp |
+| updated_at | Update Timestamp |
+
+---
 
 ## Environment Variables
 
-Create a `.env` file (not committed):
+Create a local `.env` file:
 
 ```env
-DATABASE_URL=postgresql://taskapp_user:taskapp_password@localhost:5432/taskapp
-SECRET_KEY=change-this-in-production
+DATABASE_URL=postgresql://taskapp_user:password@localhost:5432/taskapp
+SECRET_KEY=your_secret_key
 PORT=5000
 ```
 
-**Important Notes**
-- `SECRET_KEY` must be changed in production
-- `DATABASE_URL` should point to PostgreSQL
-- Defaults are provided for local development
+### Required Variables
 
-## Local Development Setup
+| Variable | Purpose |
+|-----------|----------|
+| DATABASE_URL | PostgreSQL connection |
+| SECRET_KEY | JWT signing key |
+| PORT | Application port |
 
-### Prerequisites
-- Python 3.10+
-- PostgreSQL
-- pip or virtualenv
+---
+
+## Local Development
 
 ### Create Virtual Environment
+
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 ```
 
 ### Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-## Database Initialization & Seeding
+### Run Database Migrations
 
-On application startup:
-- Tables are created automatically using `db.create_all()`
-- Default users are seeded only if no users exist
+```bash
+alembic upgrade head
+```
 
-### Default Users
+### Start Application
 
-| Username | Password  |
-|----------|-----------|
-| admin    | admin123  |
-| user     | user123   |
-
-This is intended for development and demo purposes only.
-
-## Running the Application
-
-Start the Server
 ```bash
 python run.py
 ```
 
-The API will be available at:  
-http://localhost:5000/api
+Application URL:
+
+```text
+http://localhost:5000
+```
+
+---
+
+## Testing
+
+Run tests using:
+
+```bash
+pytest
+```
+
+Test coverage includes:
+
+- Authentication
+- Task operations
+- API endpoints
+
+---
+
+## CI/CD Integration
+
+The backend is integrated into an automated GitHub Actions pipeline.
+
+### Continuous Integration
+
+Pipeline stages:
+
+- Code Quality Checks
+- Import Validation
+- Security Scanning
+- Automated Testing
+- Artifact Creation
+
+### Continuous Deployment
+
+Following a successful CI run:
+
+- Deployment artifacts are generated
+- Artifacts are transferred to AWS EC2
+- Application files are updated
+- Services are restarted automatically
+
+This enables automated deployments directly from GitHub to AWS.
+
+---
 
 ## Security Considerations
 
-- Passwords are hashed using Werkzeug
-- JWT tokens are signed with a secret key
-- All task routes are protected
-- CORS is enabled (should be restricted in production)
+The application implements:
 
-**Warning:** This setup is suitable for development and demos.
+- Password hashing
+- JWT authentication
+- Protected API routes
+- Environment-based secrets
+- Database access controls
 
-Production systems should add:
+Production environments should additionally implement:
+
 - Token expiration
 - Refresh tokens
-- Role-based access control
 - Rate limiting
+- HTTPS enforcement
+- Role-Based Access Control (RBAC)
 
-## Assumptions
-
-- PostgreSQL is available and reachable
-- Frontend supplies JWT tokens correctly
-- API is deployed behind HTTPS in production
-- Database migrations are handled externally if needed
+---
 
 ## Future Improvements
 
-- Token expiration & refresh tokens
-- Role-Based Access Control (RBAC)
-- Per-user task ownership
-- Alembic migrations
-- Structured logging
+- Docker containerization
+- Kubernetes deployment
+- Monitoring and alerting
+- Centralized logging
+- Blue-Green deployments
 - API versioning
-- Dockerized deployment
-- CI/CD integration
 
+---
 
+## Author
 
+**Anthony Chidi**
 
-# trigger
-# ssh debug
-# pubkey debug
-# ssh verbose debug
-# cleanup trigger
+*DevOps Engineer | Cloud Engineer | CI/CD & Infrastructure Automation*
