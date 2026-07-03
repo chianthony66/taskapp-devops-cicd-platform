@@ -27,7 +27,6 @@ jobs:
       - name: Download artifact
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: frontend-ci.yml
           run_id: ${{ github.event.workflow_run.id }}
           name: frontend-artifact
           github_token: ${{ secrets.GITHUB_TOKEN }}
