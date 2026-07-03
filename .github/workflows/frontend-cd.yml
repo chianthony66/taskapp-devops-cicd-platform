@@ -10,6 +10,10 @@ env:
   PROD_USER: ubuntu                      
   PROD_FRONTEND_HOST: ${{ secrets.PROD_FRONTEND_HOST }} 
 
+permissions:
+  actions: read
+  contents: read
+
 jobs:
   deploy:
     name: Deploy to Production
@@ -33,7 +37,6 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ env.PROD_FRONTEND_HOST }} >> ~/.ssh/known_hosts
-
 
       - name: Deploy frontend files
         run: |
