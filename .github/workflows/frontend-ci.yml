@@ -74,5 +74,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-artifact
-          path: frontend.tar.gz
+          path: taskapp_frontend_cicd/frontend.tar.gz
           retention-days: 7
