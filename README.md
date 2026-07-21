@@ -103,6 +103,10 @@ backend
 frontend
 ```
 
+*Ansible playbook execution — backend and frontend servers configured successfully:*
+
+![Ansible Deployment](docs/images/ansible-deployment.png)
+
 ---
 
 ## CI/CD Pipeline
