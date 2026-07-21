@@ -116,6 +116,10 @@ The backend CI pipeline performs:
 3. Automated Testing
 4. Artifact Creation
 
+*Frontend CI Pipeline — Lint, Test, and Build stages passing successfully:*
+
+![Frontend CI Pipeline](docs/images/frontend-ci-pipeline.png)
+
 ### Backend Continuous Deployment
 
 Deployment is automatically triggered after a successful CI run.
@@ -127,6 +131,14 @@ Deployment stages include:
 3. Application Deployment
 4. Service Restart
 5. Deployment Verification
+
+*Backend deployment to AWS EC2 — all stages completed successfully:*
+
+![Successful Deployment](docs/images/deploy-success.png)
+
+*GitHub Actions secrets used to securely store deployment credentials:*
+
+![GitHub Actions Secrets](docs/images/github-secrets.png)
 
 ---
 
